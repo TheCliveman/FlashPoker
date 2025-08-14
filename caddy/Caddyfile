@@ -1,0 +1,13 @@
+# Use environment DOMAIN, e.g. pokerclub.example.com
+{
+    email {$EMAIL}
+}
+
+{$DOMAIN} {
+    encode gzip
+    @ws {
+        path /ws
+    }
+    reverse_proxy @ws server:8080
+    reverse_proxy / server:8080
+}

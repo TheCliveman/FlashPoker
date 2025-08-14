@@ -1,0 +1,44 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pokerclub}
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks: [pcnet]
+
+  redis:
+    image: redis:7
+    networks: [pcnet]
+
+  server:
+    build:
+      context: ./server
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-pokerclub}
+      REDIS_URL: redis://redis:6379
+    depends_on: [db, redis]
+    networks: [pcnet]
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      EMAIL: ${EMAIL}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on: [server]
+    networks: [pcnet]
+
+volumes:
+  dbdata: {}
+
+networks:
+  pcnet: {}
